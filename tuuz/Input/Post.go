@@ -1,11 +1,13 @@
 package Input
 
 import (
+	"crypto/sha256"
 	"errors"
 	"github.com/gin-gonic/gin"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/shopspring/decimal"
 	"html/template"
+	"io"
 	"main.go/config/app_conf"
 	"main.go/tuuz/Array"
 	"main.go/tuuz/Calc"
@@ -228,15 +230,30 @@ type File struct {
 	Path     string
 	FileName string
 	Size     int64
+	Md5      string
 }
 
-func PostFile(c *gin.Context) (File, bool) {
+func Upload(c *gin.Context) (File, bool) {
 	file, err := c.FormFile("file")
 	if err != nil {
 		c.JSON(RET.Ret_fail(400, "File Upload Error", "POST-[file]:"+err.Error()))
 		c.Abort()
 		return File{}, false
 	}
+	temp_file, err := file.Open()
+	defer temp_file.Close()
+	if err != nil {
+		c.JSON(RET.Ret_fail(406, "File Open Error", "POST-[file]:"+err.Error()))
+		c.Abort()
+		return File{}, false
+	}
+	file_hash := sha256.New()
+	if _, err := io.Copy(file_hash, temp_file); err != nil {
+		c.JSON(RET.Ret_fail(303, "File Hash Error", "POST-[file]:"+err.Error()))
+		c.Abort()
+		return File{}, false
+	}
+	file_md5 := file_hash.Sum(nil)
 	filename := filepath.Base(file.Filename)
 	ext := filepath.Ext(file.Filename)
 	var path string
@@ -266,6 +283,7 @@ func PostFile(c *gin.Context) (File, bool) {
 		Path:     path + "/" + filename,
 		FileName: filename,
 		Size:     file.Size,
+		Md5:      string(file_md5),
 	}, true
 }
 

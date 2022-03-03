@@ -43,3 +43,19 @@ func Api_insert(token, name, path, mime, size, ext, md5 interface{}) bool {
 		return true
 	}
 }
+
+func Api_find_byTokenAndMd5(token, md5 interface{}) gorose.Data {
+	db := tuuz.Db().Table(table)
+	where := map[string]interface{}{
+		"token": token,
+		"md5":   md5,
+	}
+	db.Where(where)
+	ret, err := db.Find()
+	if err != nil {
+		Log.Dbrr(err, tuuz.FUNCTION_ALL())
+		return nil
+	} else {
+		return ret
+	}
+}

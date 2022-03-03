@@ -8,7 +8,7 @@ import (
 
 const table = "ao_attachment"
 
-func Api_find(md5 interface{}) gorose.Data {
+func Api_find_byMd5(md5 interface{}) gorose.Data {
 	db := tuuz.Db().Table(table)
 	where := map[string]interface{}{
 		"md5": md5,
